@@ -14,9 +14,13 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from agentic_v2_platform.config.settings import get_settings
@@ -45,6 +49,33 @@ app = FastAPI(
         "multi-database MCP tools, and Human-in-the-Loop governance."
     ),
 )
+
+# Add CORS middleware for development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+# =========================================================
+# ROOT & UI
+# =========================================================
+
+@app.get("/", tags=["UI"])
+async def root():
+    """Serve the web UI dashboard."""
+    static_file = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    if os.path.exists(static_file):
+        return FileResponse(static_file)
+    return {"message": "Web UI not available"}
 
 
 # =========================================================

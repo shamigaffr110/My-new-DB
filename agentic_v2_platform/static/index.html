@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI DBA Operations Platform V2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-card h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .status-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-card.error {
+            border-left-color: #e74c3c;
+            background: #fadbd8;
+        }
+
+        .status-card.success {
+            border-left-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .status-card.warning {
+            border-left-color: #f39c12;
+            background: #fdebd0;
+        }
+
+        nav {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        nav li {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        nav button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        nav button:hover {
+            background: #f8f9fa;
+            border-bottom-color: #667eea;
+        }
+
+        nav button.active {
+            background: #f8f9fa;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button.btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.3s ease;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        button.btn:hover {
+            background: #5568d3;
+        }
+
+        button.btn.secondary {
+            background: #6c757d;
+        }
+
+        button.btn.secondary:hover {
+            background: #5a6268;
+        }
+
+        button.btn.danger {
+            background: #e74c3c;
+        }
+
+        button.btn.danger:hover {
+            background: #c0392b;
+        }
+
+        button.btn.success {
+            background: #27ae60;
+        }
+
+        button.btn.success:hover {
+            background: #229954;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge.approved {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .badge.denied {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge.executed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge.medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge.low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.critical {
+            background: #721c24;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #eee;
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .card code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #e74c3c;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .spinner-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state p {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI DBA Operations Platform V2</h1>
+            <p>Agentic database administration with human-in-the-loop governance</p>
+            <div class="status-bar" id="statusBar"></div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><button class="nav-btn active" data-section="dashboard">Dashboard</button></li>
+                <li><button class="nav-btn" data-section="databases">Databases</button></li>
+                <li><button class="nav-btn" data-section="workflow">Workflow</button></li>
+                <li><button class="nav-btn" data-section="approvals">Approvals</button></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <!-- DASHBOARD SECTION -->
+            <div id="dashboard" class="section active">
+                <h2>Dashboard</h2>
+                <div id="dashboardContent"></div>
+            </div>
+
+            <!-- DATABASES SECTION -->
+            <div id="databases" class="section">
+                <h2>Registered Databases</h2>
+                <div id="databasesContent"></div>
+            </div>
+
+            <!-- WORKFLOW SECTION -->
+            <div id="workflow" class="section">
+                <h2>Process Ticket</h2>
+                <div class="form-group">
+                    <label for="ticketKey">Ticket Key (e.g., TICKET-001)</label>
+                    <input type="text" id="ticketKey" placeholder="Enter ticket key">
+                </div>
+                <button class="btn" onclick="processTicket()">Process Ticket</button>
+                <div id="workflowResult" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- APPROVALS SECTION -->
+            <div id="approvals" class="section">
+                <h2>Approval Management</h2>
+                <div class="form-group">
+                    <button class="btn" onclick="loadApprovals()">Refresh Approvals</button>
+                    <button class="btn secondary" onclick="loadPendingApprovals()">Show Pending Only</button>
+                </div>
+                <div id="approvalsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPROVAL MODAL -->
+    <div id="approvalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Approval Details</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="approvalDetails"></div>
+            <div id="approvalActions" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                btn.classList.add('active');
+                const section = btn.dataset.section;
+                document.getElementById(section).classList.add('active');
+
+                if (section === 'dashboard') loadDashboard();
+                else if (section === 'databases') loadDatabases();
+                else if (section === 'approvals') loadApprovals();
+            });
+        });
+
+        // Load Dashboard
+        async function loadDashboard() {
+            const content = document.getElementById('dashboardContent');
+            content.innerHTML = '<div class="spinner-container"><div class="loading"></div> Loading...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+
+                let html = `
+                    <div class="grid-2">
+                        <div class="card">
+                            <h3>Platform Status</h3>
+                            <p><strong>Version:</strong> ${data.version}</p>
+                            <p><strong>Status:</strong> ${data.status === 'ok' ? '✅ Healthy' : '❌ Unhealthy'}</p>
+                            <p><strong>Registered Databases:</strong> ${data.registered_databases.length}</p>
+                        </div>
+                        <div class="card">
+                            <h3>Configuration</h3>
+                            <p><strong>Jira Configured:</strong> ${data.jira_configured ? '✅ Yes' : '❌ No'}</p>
+                            <p><strong>Teams Configured:</strong> ${data.teams_configured ? '✅ Yes' : '❌ No'}</p>
+                            <p><strong>Email Configured:</strong> ${data.email_configured ? '✅ Yes' : '❌ No'}</p>
+                            <p><strong>AI Configured:</strong> ${data.ai_configured ? '✅ Yes' : '❌ No'}</p>
+                        </div>
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = `<div class="alert error">Failed to load dashboard: ${error.message}</div>`;
+            }
+        }
+
+        // Load Databases
+        async function loadDatabases() {
+            const content = document.getElementById('databasesContent');
+            content.innerHTML = '<div class="spinner-container"><div class="loading"></div> Loading...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/databases`);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    content.innerHTML = '<div class="empty-state"><p>No databases configured</p></div>';
+                    return;
+                }
+
+                let html = '<div class="table-container"><table><thead><tr><th>Alias</th><th>Server</th><th>Database</th></tr></thead><tbody>';
+                data.forEach(db => {
+                    html += `<tr>
+                        <td><strong>${db.alias || 'Unknown'}</strong></td>
+                        <td>${db.server || '-'}</td>
+                        <td>${db.database || '-'}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table></div>';
+
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = `<div class="alert error">Failed to load databases: ${error.message}</div>`;
+            }
+        }
+
+        // Process Ticket
+        async function processTicket() {
+            const ticketKey = document.getElementById('ticketKey').value.trim();
+            if (!ticketKey) {
+                alert('Please enter a ticket key');
+                return;
+            }
+
+            const result = document.getElementById('workflowResult');
+            result.innerHTML = '<div class="spinner-container"><div class="loading"></div> Processing ticket...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/workflow/ticket`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket_key: ticketKey })
+                });
+
+                const data = await response.json();
+                let html = '<div class="alert info"><strong>Result:</strong></div>';
+                html += '<pre style="background: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto; margin-top: 10px;">';
+                html += JSON.stringify(data, null, 2);
+                html += '</pre>';
+                result.innerHTML = html;
+            } catch (error) {
+                result.innerHTML = `<div class="alert error">Failed to process ticket: ${error.message}</div>`;
+            }
+        }
+
+        // Load Approvals
+        async function loadApprovals() {
+            const content = document.getElementById('approvalsContent');
+            content.innerHTML = '<div class="spinner-container"><div class="loading"></div> Loading approvals...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/approvals`);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    content.innerHTML = '<div class="empty-state"><p>No approvals found</p></div>';
+                    return;
+                }
+
+                let html = '<div class="table-container"><table><thead><tr><th>ID</th><th>Ticket</th><th>Database</th><th>Risk Level</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                data.forEach(approval => {
+                    const statusBadge = `<span class="badge ${approval.status.toLowerCase()}">${approval.status}</span>`;
+                    const riskBadge = `<span class="badge ${approval.risk_level.toLowerCase()}">${approval.risk_level}</span>`;
+                    html += `<tr>
+                        <td><code>${approval.approval_id.substring(0, 8)}...</code></td>
+                        <td>${approval.ticket_key}</td>
+                        <td>${approval.db_alias}</td>
+                        <td>${riskBadge}</td>
+                        <td>${statusBadge}</td>
+                        <td><button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="viewApproval('${approval.approval_id}')">View</button></td>
+                    </tr>`;
+                });
+                html += '</tbody></table></div>';
+
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = `<div class="alert error">Failed to load approvals: ${error.message}</div>`;
+            }
+        }
+
+        // Load Pending Approvals
+        async function loadPendingApprovals() {
+            const content = document.getElementById('approvalsContent');
+            content.innerHTML = '<div class="spinner-container"><div class="loading"></div> Loading pending approvals...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/approvals/pending`);
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    content.innerHTML = '<div class="empty-state"><p>No pending approvals</p></div>';
+                    return;
+                }
+
+                let html = '<div class="table-container"><table><thead><tr><th>ID</th><th>Ticket</th><th>Database</th><th>Risk Level</th><th>Created</th><th>Action</th></tr></thead><tbody>';
+                data.forEach(approval => {
+                    const riskBadge = `<span class="badge ${approval.risk_level.toLowerCase()}">${approval.risk_level}</span>`;
+                    const created = new Date(approval.created_at).toLocaleString();
+                    html += `<tr>
+                        <td><code>${approval.approval_id.substring(0, 8)}...</code></td>
+                        <td>${approval.ticket_key}</td>
+                        <td>${approval.db_alias}</td>
+                        <td>${riskBadge}</td>
+                        <td>${created}</td>
+                        <td><button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="viewApproval('${approval.approval_id}')">Review</button></td>
+                    </tr>`;
+                });
+                html += '</tbody></table></div>';
+
+                content.innerHTML = html;
+            } catch (error) {
+                content.innerHTML = `<div class="alert error">Failed to load pending approvals: ${error.message}</div>`;
+            }
+        }
+
+        // View Approval Details
+        async function viewApproval(approvalId) {
+            const modal = document.getElementById('approvalModal');
+            const details = document.getElementById('approvalDetails');
+            const actions = document.getElementById('approvalActions');
+
+            try {
+                const response = await fetch(`${API_BASE}/approvals`);
+                const allApprovals = await response.json();
+                const approval = allApprovals.find(a => a.approval_id === approvalId);
+
+                if (!approval) {
+                    alert('Approval not found');
+                    return;
+                }
+
+                const created = new Date(approval.created_at).toLocaleString();
+                const decided = approval.decided_at ? new Date(approval.decided_at).toLocaleString() : 'N/A';
+
+                let html = `
+                    <div class="card" style="background: white; border: 1px solid #eee;">
+                        <p><strong>Approval ID:</strong> <code>${approval.approval_id}</code></p>
+                        <p><strong>Ticket:</strong> ${approval.ticket_key}</p>
+                        <p><strong>Database:</strong> ${approval.db_alias}</p>
+                        <p><strong>Risk Level:</strong> <span class="badge ${approval.risk_level.toLowerCase()}">${approval.risk_level}</span></p>
+                        <p><strong>Status:</strong> <span class="badge ${approval.status.toLowerCase()}">${approval.status}</span></p>
+                        <p><strong>Created:</strong> ${created}</p>
+                        <p><strong>Decided At:</strong> ${decided}</p>
+                        <p><strong>Decided By:</strong> ${approval.decided_by || 'N/A'}</p>
+                        <p><strong>Recommendation:</strong></p>
+                        <p style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0;">${approval.recommendation || 'N/A'}</p>
+                        <p><strong>Action SQL:</strong></p>
+                        <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${approval.action || 'N/A'}</pre>
+                        <p><strong>Diagnostic Summary:</strong></p>
+                        <p style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 13px;">${approval.diagnostic_summary || 'N/A'}</p>
+                        ${approval.execution_result ? `
+                            <p><strong>Execution Result:</strong></p>
+                            <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px;">${JSON.stringify(approval.execution_result, null, 2)}</pre>
+                        ` : ''}
+                    </div>
+                `;
+
+                details.innerHTML = html;
+
+                if (approval.status === 'PENDING') {
+                    actions.innerHTML = `
+                        <button class="btn success" onclick="approveRequest('${approvalId}')">✅ Approve & Execute</button>
+                        <button class="btn danger" onclick="denyRequest('${approvalId}')">❌ Deny</button>
+                    `;
+                } else {
+                    actions.innerHTML = '<p style="color: #999; font-size: 14;">This approval has already been decided.</p>';
+                }
+
+                modal.classList.add('active');
+            } catch (error) {
+                alert('Failed to load approval: ' + error.message);
+            }
+        }
+
+        // Approve Request
+        async function approveRequest(approvalId) {
+            if (!confirm('Are you sure you want to approve and execute this action?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/hitl/approve?id=${approvalId}&decided_by=DBA_USER`, {
+                    method: 'GET'
+                });
+                const result = await response.json();
+                alert('Action approved and executed!\n\n' + JSON.stringify(result, null, 2));
+                closeModal();
+                loadApprovals();
+            } catch (error) {
+                alert('Failed to approve: ' + error.message);
+            }
+        }
+
+        // Deny Request
+        async function denyRequest(approvalId) {
+            const reason = prompt('Enter denial reason:');
+            if (!reason) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/hitl/deny?id=${approvalId}&decided_by=DBA_USER&reason=${encodeURIComponent(reason)}`, {
+                    method: 'GET'
+                });
+                const result = await response.json();
+                alert('Action denied!\n\n' + JSON.stringify(result, null, 2));
+                closeModal();
+                loadApprovals();
+            } catch (error) {
+                alert('Failed to deny: ' + error.message);
+            }
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('approvalModal').classList.remove('active');
+        }
+
+        // Initial load
+        loadDashboard();
+    </script>
+</body>
+</html>
